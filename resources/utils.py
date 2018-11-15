@@ -1,4 +1,4 @@
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix
 import itertools
 import numpy as np
 from scipy.io import loadmat
@@ -8,7 +8,7 @@ def conf_matrix(Y_true, Y_pred, fig, z=1, labels=[1, -1], target_names=['Regular
                 model_name="Isolation forest"):
 
     cm = confusion_matrix(Y_true, Y_pred, labels)
-    # print(classification_report(Y_true, Y_pred, target_names=target_names))
+    #print(classification_report(Y_true, Y_pred, target_names=target_names))
     ax = fig.add_subplot(1, 2, z)
     cax = ax.matshow(cm, cmap='YlGn', interpolation='nearest')  # plt.cm.Blues
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
