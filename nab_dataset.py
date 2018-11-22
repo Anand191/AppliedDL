@@ -28,13 +28,27 @@ class add_labels(object):
         self.ftype = filetype
         self.window = window
 
+    def _format_datetime(self, timestamp):
+        return(timestamp.split('.')[0])
+
     def _windowless(self, data, anomaly_labels):
         rows = list(data.loc[data['timestamp'].isin(anomaly_labels)].index)
         data['anomaly'].iloc[rows] = 1
         return data
 
     def _label_window(self, data, anomaly_labels):
-        raise NotImplementedError
+        if not any(isinstance(el, Sequence) for el in anomaly_labels):
+            window_start = data.loc[data['timestamp'] == self._format_datetime(anomaly_labels[0])].index.values[0]
+            window_end = data.loc[data['timestamp'] == self._format_datetime(anomaly_labels[1])].index.values[0]
+            rows = list(range(window_start, window_end + 1))
+            data['anomaly'].iloc[rows] = 1
+        else:
+            for alabel in anomaly_labels:
+                window_start = data.loc[data['timestamp'] == self._format_datetime(alabel[0])].index.values[0]
+                window_end = data.loc[data['timestamp'] == self._format_datetime(alabel[1])].index.values[0]
+                rows = list(range(window_start, window_end+1))
+                data['anomaly'].iloc[rows] = 1
+        return data
 
 
     def _preprocess(self, fpath, label_path):
