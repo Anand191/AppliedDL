@@ -52,3 +52,33 @@ class calendar_features(object):
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
+
+
+
+class statistical_features(object):
+    '''
+
+    '''
+    def __init__(self, path):
+        self.path = path
+        self.reset()
+
+    def lagged_cols(self, col_name,num_lags, all_lags=True):
+        if all_lags:
+            for lag in range(1, num_lags+1):
+                self.df['lag_{}'.format(lag)] = self.df[col_name].shift(lag)
+        else:
+            self.df['lag_{}'.format(num_lags)] = self.df[col_name].shift(num_lags)
+
+    def n_stddevs(self,col_name):
+        mean = np.mean(self.df[col_name].values)
+        std = np.std(self.df[col_name].values)
+        self.df['n_stddevs'] = self.df[col_name].apply(lambda x: np.absolute(x-mean)/std)
+
+    def reset(self):
+        self.df = pd.read_csv(self.path, sep=',', index_col=0)
+
+
+
+
+

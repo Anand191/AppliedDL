@@ -2,7 +2,8 @@ from nab_dataset import add_labels
 import os
 import json
 import pandas as pd
-from numenta_features import calendar_features
+import numpy as np
+from numenta_features import calendar_features, statistical_features
 
 # data_files = os.listdir('./resources/Numenta/data/realAdExchange')
 # file_paths = [os.path.join('./resources/Numenta/data/realAdExchange',f) for f in data_files]
@@ -31,16 +32,39 @@ print(add_calender_features.df.columns)
 
 add_calender_features.add_weekdays()
 print(add_calender_features.df.columns)
-add_calender_features.reset()
+
 
 add_calender_features.add_week()
 print(add_calender_features.df.columns)
-add_calender_features.reset()
+
 
 add_calender_features.add_month()
 print(add_calender_features.df.columns)
-add_calender_features.reset()
+
 
 add_calender_features.add_quarter()
 print(add_calender_features.df.columns)
-add_calender_features.reset()
+
+print('****************************************************************************')
+
+
+add_statistical_features = statistical_features(path)
+add_statistical_features.lagged_cols('value', 5)
+print(add_statistical_features.df.head())
+
+add_statistical_features.n_stddevs('value')
+print(add_statistical_features.df.head())
+
+add_statistical_features.reset()
+print(add_statistical_features.df.head())
+
+
+# print('******************************************************************************')
+# col_name = 'value'
+# test_df = pd.read_csv(path, sep=',', index_col=0)
+# mean = np.mean(test_df[col_name].values)
+# std = np.std(test_df[col_name].values)
+# print('mean = {} ; std = {}'.format(mean, std))
+# test_df['n_stddevs'] = test_df[col_name].apply(lambda x: np.absolute(x-mean)/std)
+# print(test_df.head())
+
