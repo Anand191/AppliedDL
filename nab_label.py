@@ -50,12 +50,14 @@ print('*************************************************************************
 
 add_statistical_features = statistical_features(path)
 add_statistical_features.lagged_cols('value', 5)
-print(add_statistical_features.df.head())
+print(add_statistical_features.df.columns)
 
 add_statistical_features.n_stddevs('value')
-print(add_statistical_features.df.head())
+print(add_statistical_features.df.columns)
 
 add_statistical_features.reset()
+add_statistical_features.rolling('value',2)
+add_statistical_features.expanding('value')
 print(add_statistical_features.df.head())
 
 

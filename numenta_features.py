@@ -70,10 +70,30 @@ class statistical_features(object):
         else:
             self.df['lag_{}'.format(num_lags)] = self.df[col_name].shift(num_lags)
 
+        self.df.dropna(inplace=True)
+
     def n_stddevs(self,col_name):
         mean = np.mean(self.df[col_name].values)
         std = np.std(self.df[col_name].values)
         self.df['n_stddevs'] = self.df[col_name].apply(lambda x: np.absolute(x-mean)/std)
+
+    def rolling(self, col_name, window, summary='mean'):
+        #add win_type feature
+        window = self.df[col_name].rolling(window=window, min_periods=1)
+        statistic = getattr(window, summary)
+        self.df['rolling_{}'.format(summary)] = statistic()
+
+    def expanding(self, col_name, summary='mean', center=False):
+        '''
+        expanding transformation. e.g. with summary = mean, we get the mean of first 2 elements, then first 3
+        then first 4 and so on.
+        '''
+        window = self.df[col_name].expanding(min_periods=1, center=center)
+        statistic = getattr(window, summary)
+        self.df['expanding_{}'.format(summary)] = statistic()
+
+    def exponential_weighted(self):
+        raise NotImplementedError
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
