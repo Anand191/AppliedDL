@@ -92,8 +92,10 @@ class statistical_features(object):
         statistic = getattr(window, summary)
         self.df['expanding_{}'.format(summary)] = statistic()
 
-    def exponential_weighted(self):
-        raise NotImplementedError
+    def exponential_weighted(self, col_name, smoothing = 0.2, summary='mean'):
+        window = self.df[col_name].ewm(alpha = smoothing)
+        statistic = getattr(window, summary)
+        self.df['exponential_{}'.format(summary)] = statistic()
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
