@@ -5,7 +5,27 @@ from collections import Counter
 
 class calendar_features(object):
     '''
+    This class receives the path to a csv file which is organized as timestamp, values and appends to it calender
+    features viz. days of week, week of year etc. The added calendar features are categorical and are added either using
+    dummy encoding (k-1 features to avoid multicollinearity) or one-hot encoding (all k features). If for ex the data
+    doesn't span the entire space of the categorical variable then one-hot encoding is used by default.
 
+    If at any point we wish to go back to the initial state of the data-frame (as read from csv) we just need to use
+    the reset method.
+
+
+    **Add hourly features, holidays and dummy/one-hot based on type of algorithms used. e.g. regression uses dummy
+    xgboost uses one-hot.
+
+    Args:
+        path (str)(scalar) : path to the data file
+        dummy (bool) : whether to use dummy encoding or one-hot encoding
+    Attributes:
+         ALL_DAYS (List): List of all days of week
+         ALL_WEEKS (list): List of all the weeks in a year
+         ALL_Months (List): 1-12
+         ALL_QUARTERS (List): 1-4
+         KEYS (dict): map strings to the above mentioned data structures
     '''
 
     ALL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -27,37 +47,40 @@ class calendar_features(object):
             self.dummy = False
 
     def add_weekdays(self):
-        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
         self.df['day_of_week'] = self.df['timestamp'].dt.day_name()
         self._dummyVsOnehot('day_of_week', 'days')
         self._makeCategorical('day_of_week', 'day')
 
     def add_week(self):
-        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
         self.df['week_of_year'] = self.df['timestamp'].dt.week
         self._dummyVsOnehot('week_of_year', 'weeks')
         self._makeCategorical('week_of_year', 'week')
 
     def add_month(self):
-        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
         self.df['month_of_year'] = self.df['timestamp'].dt.month
         self._dummyVsOnehot('month_of_year', 'months')
         self._makeCategorical('month_of_year', 'month')
 
     def add_quarter(self):
-        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
         self.df['quarter_of_year'] = self.df['timestamp'].dt.quarter
         self._dummyVsOnehot('quarter_of_year', 'quarters')
         self._makeCategorical('quarter_of_year', 'quarter')
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
+        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
 
 
 
 class statistical_features(object):
     '''
+    This class recieves the path to a csv file which is organized as timestamp, values and appends to it statistical
+    features viz. moving averages, expanding averages, exponential smoothing etc.
 
+    If at any point we wish to go back to the initial state of the data-frame (as read from csv) we just need to use
+    the reset method.
+    Args:
+        path (str)(scalar): path to the csv file
     '''
     def __init__(self, path):
         self.path = path
@@ -99,6 +122,8 @@ class statistical_features(object):
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
+        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
+
 
 
 
