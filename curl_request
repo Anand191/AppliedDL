@@ -1,0 +1,7 @@
+curl -X POST \
+    -H "X-RosetteAPI-Key: 03217af9eced40a5e2d1bcca4b76a4aa" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    -H "Cache-Control: no-cache" \
+    -d '{"content": "A valid currency of exchange between the banks in Netherlands, for e.g. ING and Rabobank, is Euro and not USD. Furthermore only transactions processed between 01-01-1990 and 31-12-2017 are valid." , "genre": "regulatory", "options": {"includeDBpediaType": true}}' \
+    "https://api.rosette.com/rest/v1/entities"
