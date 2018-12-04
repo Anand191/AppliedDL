@@ -13,6 +13,7 @@ def run(key, alt_url='https://api.rosette.com/rest/v1/'):
 
     etd_2 = "A valid currency of exchange between the banks in Netherlands, for e.g. ING and Rabobank, is Euro and not USD." \
             "Furthermore only transactions processed between 01-01-1990 and 31-12-2017 are valid."
+    #check DBpedia ontology
 
     params = DocumentParameters()
     params["content"] = etd_2
