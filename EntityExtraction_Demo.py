@@ -18,7 +18,7 @@ def run(key, alt_url='https://api.rosette.com/rest/v1/'):
     params = DocumentParameters()
     params["content"] = etd_2
     params["genre"] = "regulatory"
-
+    # "options": {"includeDBpediaType": true}
     try:
         return api.entities(params)
     except RosetteException as exception:
