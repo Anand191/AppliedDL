@@ -20,9 +20,7 @@ Use example:
 '''
 etd_2 = "A valid currency of exchange between the banks in Netherlands, for e.g. ING and Rabobank, is Euro and not GBP. " \
         "Furthermore only transactions processed between 01-01-1990 and 31-12-2017 are valid."
+
 ee = extract_entities()
 r = ee.entities(etd_2)
 pprint(r.json())
-
-
-
