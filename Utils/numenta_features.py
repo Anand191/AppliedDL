@@ -50,21 +50,29 @@ class calendar_features(object):
         self.df['day_of_week'] = self.df['timestamp'].dt.day_name()
         self._dummyVsOnehot('day_of_week', 'days')
         self._makeCategorical('day_of_week', 'day')
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def add_week(self):
         self.df['week_of_year'] = self.df['timestamp'].dt.week
         self._dummyVsOnehot('week_of_year', 'weeks')
         self._makeCategorical('week_of_year', 'week')
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def add_month(self):
         self.df['month_of_year'] = self.df['timestamp'].dt.month
         self._dummyVsOnehot('month_of_year', 'months')
         self._makeCategorical('month_of_year', 'month')
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def add_quarter(self):
         self.df['quarter_of_year'] = self.df['timestamp'].dt.quarter
         self._dummyVsOnehot('quarter_of_year', 'quarters')
         self._makeCategorical('quarter_of_year', 'quarter')
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
