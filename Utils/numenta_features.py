@@ -94,17 +94,23 @@ class statistical_features(object):
             self.df['lag_{}'.format(num_lags)] = self.df[col_name].shift(num_lags)
 
         self.df.dropna(inplace=True)
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def n_stddevs(self,col_name):
         mean = np.mean(self.df[col_name].values)
         std = np.std(self.df[col_name].values)
         self.df['n_stddevs'] = self.df[col_name].apply(lambda x: np.absolute(x-mean)/std)
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def rolling(self, col_name, window, summary='mean'):
         #add win_type feature
         window = self.df[col_name].rolling(window=window, min_periods=1)
         statistic = getattr(window, summary)
         self.df['rolling_{}'.format(summary)] = statistic()
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def expanding(self, col_name, summary='mean', center=False):
         '''
@@ -114,11 +120,15 @@ class statistical_features(object):
         window = self.df[col_name].expanding(min_periods=1, center=center)
         statistic = getattr(window, summary)
         self.df['expanding_{}'.format(summary)] = statistic()
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def exponential_weighted(self, col_name, smoothing = 0.2, summary='mean'):
         window = self.df[col_name].ewm(alpha = smoothing)
         statistic = getattr(window, summary)
         self.df['exponential_{}'.format(summary)] = statistic()
+        tgt_col = self.df.pop('anomaly')
+        self.df['anomaly'] = tgt_col
 
     def reset(self):
         self.df = pd.read_csv(self.path, sep=',', index_col=0)
