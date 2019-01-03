@@ -75,8 +75,11 @@ class calendar_features(object):
         self.df['anomaly'] = tgt_col
 
     def reset(self):
-        self.df = pd.read_csv(self.path, sep=',', index_col=0)
-        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
+        if isinstance(self.path, pd.DataFrame):
+            self.df = self.path
+        else:
+            self.df = pd.read_csv(self.path, sep=',', index_col=0)
+            self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
 
 
 
@@ -94,7 +97,7 @@ class statistical_features(object):
         self.path = path
         self.reset()
 
-    def lagged_cols(self, col_name,num_lags, all_lags=True):
+    def lagged_cols(self, col_name='value',num_lags=5, all_lags=True):
         if all_lags:
             for lag in range(1, num_lags+1):
                 self.df['lag_{}'.format(lag)] = self.df[col_name].shift(lag)
@@ -105,14 +108,14 @@ class statistical_features(object):
         tgt_col = self.df.pop('anomaly')
         self.df['anomaly'] = tgt_col
 
-    def n_stddevs(self,col_name):
+    def n_stddevs(self,col_name='value'):
         mean = np.mean(self.df[col_name].values)
         std = np.std(self.df[col_name].values)
         self.df['n_stddevs'] = self.df[col_name].apply(lambda x: np.absolute(x-mean)/std)
         tgt_col = self.df.pop('anomaly')
         self.df['anomaly'] = tgt_col
 
-    def rolling(self, col_name, window, summary='mean'):
+    def rolling(self, col_name='value', window=2, summary='mean'):
         #add win_type feature
         window = self.df[col_name].rolling(window=window, min_periods=1)
         statistic = getattr(window, summary)
@@ -120,7 +123,7 @@ class statistical_features(object):
         tgt_col = self.df.pop('anomaly')
         self.df['anomaly'] = tgt_col
 
-    def expanding(self, col_name, summary='mean', center=False):
+    def expanding(self, col_name='value', summary='mean', center=False):
         '''
         expanding transformation. e.g. with summary = mean, we get the mean of first 2 elements, then first 3
         then first 4 and so on.
@@ -131,7 +134,7 @@ class statistical_features(object):
         tgt_col = self.df.pop('anomaly')
         self.df['anomaly'] = tgt_col
 
-    def exponential_weighted(self, col_name, smoothing = 0.2, summary='mean'):
+    def exponential_weighted(self, col_name='value', smoothing = 0.2, summary='mean'):
         window = self.df[col_name].ewm(alpha = smoothing)
         statistic = getattr(window, summary)
         self.df['exponential_{}'.format(summary)] = statistic()
@@ -139,8 +142,11 @@ class statistical_features(object):
         self.df['anomaly'] = tgt_col
 
     def reset(self):
-        self.df = pd.read_csv(self.path, sep=',', index_col=0)
-        self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
+        if isinstance(self.path, pd.DataFrame):
+            self.df = self.path
+        else:
+            self.df = pd.read_csv(self.path, sep=',', index_col=0)
+            self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
 
 
 

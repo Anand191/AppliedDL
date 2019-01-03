@@ -1,68 +1,155 @@
+import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, confusion_matrix,f1_score
+from sklearn.metrics import roc_auc_score, confusion_matrix,f1_score, classification_report
+from sklearn.manifold import TSNE
 from sklearn.externals import joblib
-from .numenta_features import statistical_features
+from Utils.numenta_features import statistical_features, calendar_features
+
+random_state = np.random.RandomState(42)
 
 class isolationForest(object):
     '''
 
     '''
-    def __init__(self, path, preprocess=True):
+    def __init__(self, path, eval_mode = False,print_report=True,preprocess=True, preprocess_args={"add_statistical": True, "add_calendar": True,
+                                                               "statistical":['lagged_cols'],"calendar":['add_weekdays']}):
         '''
         preprocess the data here
-        :param data: path
+        :param path: path
         '''
-        self.path = path
-        if preprocess:
-            self._preprocess()
+        if isinstance(path, pd.DataFrame):
+            self.df = path
         else:
-            self.df = pd.read_csv(self.path, sep=',', index_col=0)
+            self.df = pd.read_csv(path, sep=',', index_col=0)
             self.df['timestamp'] = self.df['timestamp'].apply(lambda x: pd.to_datetime(x))
 
-        self.clf = IsolationForest(n_estimators=100, max_samples='auto', contamination=0.01, \
-                              max_features=1.0, bootstrap=False, n_jobs=-1, random_state=42, verbose=0, behaviour="new")
+        if preprocess:
+            self._preprocess(**preprocess_args)
 
-        self.ensemble = []
+        self.report = print_report
+        self.eval_mode = eval_mode
         self. accuracy = 0.
         self.precision = 0.
         self.recall = 0.
         self.f1 = 0.
         self.roc_auc = 0.
+        self.cm = 0.
 
-    def _preprocess(self):
-        add_features = statistical_features(self.path)
-        add_features.lagged_cols('value', 5)
-        self.df = add_features.df
-
-    def train(self, ensembleSize=5, sampleSize=500):
-        mdlLst = []
+    def train(self, test_split = 0.2, ensembleSize=5, sampleSize=500, save=True, save_path=None):
+        clf = IsolationForest(n_estimators=100, max_samples='auto', contamination=0.01,
+                              max_features=1.0, bootstrap=False, n_jobs=-1, random_state=42, verbose=0, behaviour="new")
+        Data = self.df.iloc[:,1:-1 ].values
+        Target = self.df.iloc[:, -1].values
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(Data, Target, test_size=test_split,
+                                                            random_state=random_state, stratify=Target)
+        Xidxs = list(range(0,Data.shape[0]))
+        self.ensemble = []
         for n in range(ensembleSize):
-            X = df_data.sample(sampleSize)
+            sample = np.random.choice(Xidxs,sampleSize)
+            X = Data[sample,:]
             clf.fit(X)
-            mdlLst.append(clf)
-        return mdlLst
+            self.ensemble.append(clf)
 
-    def predict(self, X):
-        y_pred = np.zeros(X.shape[0])
-        for clf in mdlLst:
-            y_pred = np.add(y_pred, clf.decision_function(X).reshape(X.shape[0], ))
-        y_pred = (y_pred * 1.0) / len(mdlLst)
-        return y_pred
+        if save:
+            self._save_model(save_path)
 
-    def save_model(self):
-        raise NotImplementedError
+    def eval(self, loadpath=None):
+        if self.eval_mode:
+            if loadpath is None:
+                raise ValueError('A path to saved model must be provided if eval mode is on')
+            else:
+                self.ensemble = []
+                if isinstance(loadpath, list):
+                    for lp in loadpath:
+                        self.ensemble.append(joblib.load(lp))
+                else:
+                    self.ensemble.append(joblib.load(loadpath))
+                self.X_test = self.df.iloc[:, 1:-1].values
+                self.y_test = self.df.iloc[:, -1].values
+                self._predict()
+        else:
+            self._predict()
 
-    def load_predict(self):
-        raise NotImplementedError
+    def plot(self, plot_data=False, plot_tsne=False, plot_conf=False):
+        #Timeseries plot
+        if plot_data:
+            self.df.plot(x='timestamp', y='value')
 
-    def confusion_matrix(self):
-        raise NotImplementedError
+        # TSNE Plot of data
+        if plot_tsne:
+            X_embedded, labels = self._tsne_data()
+            plt.figure(figsize=(12, 8))
+            plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=labels, cmap=plt.cm.get_cmap("Paired", 2))
+            plt.colorbar(ticks=range(2))
 
-    def ROC_curve(self):
-        raise NotImplementedError
+        # Confusion Matrix
+        if plot_conf:
+            df_cm = pd.DataFrame(self.cm,
+                                 ['Normal', 'Anomaly'], ['Pred Normal', 'Pred Anomaly'])
+            plt.figure(figsize=(10,6))
+            sns.set(font_scale=1.2)  # for label size
+            g = sns.heatmap(df_cm, annot=True, annot_kws={"size": 12}, fmt='g')
 
+        plt.show()
 
+    def _predict(self):
+        y_pred = np.zeros(self.X_test.shape[0])
+        for clf in self.ensemble:
+            y_pred = np.add(y_pred, clf.decision_function(self.X_test).reshape(self.X_test.shape[0], ))
+        y_pred = (y_pred * 1.0) / len(self.ensemble)
+        y_pred = 1 - y_pred
 
+        self.y_pred_class = y_pred.copy()
+        self.y_pred_class[y_pred >= np.percentile(y_pred, 95)] = 1
+        self.y_pred_class[y_pred < np.percentile(y_pred, 95)] = 0
+        self._get_report()
+
+    def _preprocess(self, add_statistical, add_calendar, statistical, calendar):
+        if add_statistical:
+            add_stat_features = statistical_features(self.df)
+            statistical_methods = [getattr(add_stat_features, methodname) for methodname in statistical]
+            for method in statistical_methods:
+                method()
+            self.df = add_stat_features.df
+
+        if add_calendar:
+            add_cal_features = calendar_features(self.df)
+            calnendar_methods = [getattr(add_cal_features, methodname) for methodname in calendar]
+            for method in calnendar_methods:
+                method()
+            self.df = add_cal_features.df
+
+    def _save_model(self, path):
+        for i, model in enumerate(self.ensemble):
+            fname = os.path.join(path, 'iFmodel_{}.sav'.format(i))
+            joblib.dump(model, fname)
+
+    def _get_report(self):
+        self.roc_auc = roc_auc_score(self.y_test, self.y_pred_class)
+        self.f1 = f1_score(self.y_test, self.y_pred_class)
+        self.cm = confusion_matrix(self.y_test, self.y_pred_class)
+        if self.report:
+            print(classification_report(self.y_test,self.y_pred_class))
+
+    def _tsne_data(self):
+        y_plt = self.df['anomaly'].values
+        X_plt = self.df.iloc[:,1:-1].values
+        return(TSNE(n_components=2).fit_transform(X_plt), y_plt)
+
+# filepath = '../resources/Numenta/cleaned_data/window/realAdExchange-exchange-2_cpc_results.csv'
+# savepath = '../resources/Misc./Isolation_Forest/'
+# iF = isolationForest(filepath, print_report=False)
+# iF.train(save=True, save_path=savepath)
+# iF.eval()
+# iF.plot(plot_conf=True, plot_data=True)
+
+# filepath = '../resources/Numenta/cleaned_data/window/realAdExchange-exchange-2_cpm_results.csv'
+# loadpath = ['../resources/Misc./Isolation_Forest/iFmodel_0.sav']
+# iF = isolationForest(filepath,eval_mode=True, print_report=False)
+# iF.eval(loadpath)
+# iF.plot(plot_conf=True)
