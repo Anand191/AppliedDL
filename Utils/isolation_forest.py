@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, confusion_matrix,f1_score, classification_report
+from sklearn.metrics import roc_auc_score, confusion_matrix,accuracy_score, classification_report, roc_curve, auc
 from sklearn.manifold import TSNE
 from sklearn.externals import joblib
 from Utils.numenta_features import statistical_features, calendar_features
@@ -16,7 +16,7 @@ class isolationForest(object):
     '''
 
     '''
-    def __init__(self, path, eval_mode = False,print_report=True,preprocess=True, preprocess_args={"add_statistical": True, "add_calendar": True,
+    def __init__(self, path, eval_mode = False,print_report=False,preprocess=True, preprocess_args={"add_statistical": True, "add_calendar": True,
                                                                "statistical":['lagged_cols'],"calendar":['add_weekdays']}):
         '''
         preprocess the data here
@@ -33,10 +33,7 @@ class isolationForest(object):
 
         self.report = print_report
         self.eval_mode = eval_mode
-        self. accuracy = 0.
-        self.precision = 0.
-        self.recall = 0.
-        self.f1 = 0.
+        self.accuracy = 0.
         self.roc_auc = 0.
         self.cm = 0.
 
@@ -93,7 +90,7 @@ class isolationForest(object):
                                  ['Normal', 'Anomaly'], ['Pred Normal', 'Pred Anomaly'])
             plt.figure(figsize=(10,6))
             sns.set(font_scale=1.2)  # for label size
-            g = sns.heatmap(df_cm, annot=True, annot_kws={"size": 12}, fmt='g')
+            sns.heatmap(df_cm, annot=True, annot_kws={"size": 12}, fmt='g')
 
         plt.show()
 
@@ -131,10 +128,24 @@ class isolationForest(object):
 
     def _get_report(self):
         self.roc_auc = roc_auc_score(self.y_test, self.y_pred_class)
-        self.f1 = f1_score(self.y_test, self.y_pred_class)
+        self.accuracy = accuracy_score(self.y_test, self.y_pred_class)
         self.cm = confusion_matrix(self.y_test, self.y_pred_class)
         if self.report:
             print(classification_report(self.y_test,self.y_pred_class))
+            fpr, tpr, _ = roc_curve(self.y_test, self.y_pred_class)
+            auc_sc = auc(fpr, tpr)
+            plt.figure()
+            lw = 2
+            plt.plot(fpr, tpr, color='darkorange',
+                     lw=lw, label='ROC curve (area = %0.2f)' % auc_sc)
+            plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('Receiver operating characteristic example')
+            plt.legend(loc="lower right")
+            plt.show()
 
     def _tsne_data(self):
         y_plt = self.df['anomaly'].values
@@ -143,7 +154,7 @@ class isolationForest(object):
 
 # filepath = '../resources/Numenta/cleaned_data/window/realAdExchange-exchange-2_cpc_results.csv'
 # savepath = '../resources/Misc./Isolation_Forest/'
-# iF = isolationForest(filepath, print_report=False)
+# iF = isolationForest(filepath)
 # iF.train(save=True, save_path=savepath)
 # iF.eval()
 # iF.plot(plot_conf=True, plot_data=True)
