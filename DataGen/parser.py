@@ -32,11 +32,14 @@ def create_dialogs(files):
                             majority_label['B'] += 1
                     label.append(max(majority_label, key=lambda key: majority_label[key]))
             if (len(sr) > len(uu)):
-                uu.extend(['']*(len(sr) - len(uu)))
+                for i in range(len(sr) - len(uu)):
+                    sr.pop(i)
+                    label.pop(i)
             elif (len(uu) > len(sr)):
-                continue
+                for i in range(len(sr), len(uu)):
+                    uu.pop(i)
+            dialogue_until = ['']
             uu_sr = [uu[i] + ' ' + s for i, s in enumerate(sr)]
-            #print(len(uu), len(sr), len(uu_sr), len(label))
             dialog = np.c_[uu, sr, uu_sr, label]
         dialogues.append(dialog)
         # for d in dialog:
@@ -54,8 +57,8 @@ eval_files = create_filepaths(master_eval)
 train_dialogues = create_dialogs(train_files)
 eval_dialogues = create_dialogs(eval_files)
 
-#assert(len(train_dialogues) == len(train_files))
-#assert(len(eval_dialogues) == len(eval_files))
+assert(len(train_dialogues) == len(train_files))
+assert(len(eval_dialogues) == len(eval_files))
 
 
 

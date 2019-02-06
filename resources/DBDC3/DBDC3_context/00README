@@ -1,0 +1,49 @@
+Overview:
+---------
+This dataset was made by DBDC3 Task Organizers based on Stanford
+Question Answering Dataset (SQuAD) [1].  The data can be used for
+both profit and nonprofit purposes under the CC BY-SA 4.0 license
+(see LICENSE.txt). The data contain short paragraphs used
+as context for DBDC3. Main data are distributed at the following
+URL: https://dbd-challenge.github.io/dbdc3/data/DBDC3.zip
+For more details of the dataset, refer to [2].
+
+Folder Structure:
+-----------------
+dbdc3
+└── en
+    ├── dev
+    │   └── CIC_115
+    └── eval
+        └── CIC_50
+
+Reference:
+----------
+Please refer to one or both of the following papers when you publish
+your results using this dataset.
+
+[1] https://rajpurkar.github.io/SQuAD-explorer/
+
+[2] R. Higashinaka, K. Funakoshi, M. Inaba, Y. Tsunomori, T. Takahashi,
+  and N. Kaji, "Overview of dialogue breakdown detection challenge 3,"
+  in Proceedings of Dialog System Technology Challenge 6 (DSTC6)
+  Workshop, 2017.
+
+Task Organizers:
+----------------
+- Ryuichiro Higashinaka (NTT)
+- Kotaro Funakoshi (Kyoto University/Honda Research Institute Japan)
+- Michimasa Inaba (Hiroshima City University)
+- Yuiko Tsunomori (NTT Docomo)
+- Tetsuro Takahashi (Fujitsu)
+- Nobuhiro Kaji (Yahoo Japan Corporation)
+
+Contact:
+--------
+dbdc3-organizers@googlegroups.com
+
+Revision history:
+-----------------
+- v1.2: Feb. 28 2018
+- v1.1: Feb. 19 2018
+
