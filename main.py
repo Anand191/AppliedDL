@@ -1,5 +1,6 @@
 from os.path import join
 import re, math, json
+from pprint import pprint
 
 from file_handling import FileHandler
 from ner import RosetteEntities
@@ -181,11 +182,12 @@ def load_named_entities():
 
         for ne_set in ne_sets:
             cleaned = _clean_unwanted_chars(ne_set)
-            print(cleaned)
+            pprint(cleaned)
             split = _split_sentences(cleaned)
             # print(split)
             restructured = restructure_entity_info(split)
             print(restructured)
+            input()
 
 if __name__ == '__main__':
     #main()
