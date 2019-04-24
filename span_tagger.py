@@ -1,10 +1,9 @@
-from pprint import pprint
 import json, re
+from entity_drilldown import additional_entities
 
 import numpy as np
 import pandas as pd
 import spacy
-from spacy import displacy
 
 nlp = spacy.load('en')
 
@@ -19,6 +18,9 @@ text = json_data['text']
 text = re.sub('\n',' ', text)
 doc = nlp(text)
 #import pdb; pdb.set_trace()
+sent_span = []
+for sent in doc.sents:
+    sent_span.append((sent.start_char, sent.end_char))
 
 startOffset_tag = {}
 endOffset_tag = {}
@@ -48,10 +50,21 @@ for entity in rosette_entities:
             else:
                 span_tags[row, -1] = 'I-' + entity['type']
 
+nent_rows = np.where(span_tags[:,-1]==0)[0]
+span_tags[nent_rows,-1] = 'OTHER'
+span_tags = additional_entities(span_tags)
 
-df = pd.DataFrame(span_tags, columns=['startOffset', 'endOffset', 'Token', 'Entities'])
-df['Entities'] = df['Entities'].replace(0, 'NENT')
+seq2ent_arr = np.zeros((len(sent_span), 2), dtype=object)
+for i, span in enumerate(sent_span):
+    sent_rows = np.where(
+            np.logical_and(
+                np.greater_equal(span_tags[:,0],span[0]),
+                np.less_equal(span_tags[:,1], span[1])
+            )
+        )[0]
+    seq2ent_arr[i,0] = ' '.join(map(str, span_tags[sent_rows, -2]))
+    seq2ent_arr[i,1] = ' '.join(map(str, span_tags[sent_rows, -1]))
 
-special_characters = [" ", "  ", "   ", "\t", ".", "..."]
-df.to_csv('./resources/EC_regulations/Seq2Ent_Data/CELEX_32013R1375_EN_TXT.csv')
+df = pd.DataFrame(seq2ent_arr, columns=['Sequence', 'Entities'])
+df.to_csv('./resources/EC_regulations/Seq2Ent_Data/CELEX_32013R1375_EN_TXT_new.csv')
 
